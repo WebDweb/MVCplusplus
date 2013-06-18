@@ -5,12 +5,15 @@
 class Mvcpp
 {
 	public static $config;
-	public $user;
+	public static $user;
 	public $route;
+	public static $baseUrl;
+	public static $name;
 	
 	public function init($config)
 	{
-		require('protected/models/Site.php');
+		self::$baseUrl = $_SERVER["HTTP_HOST"].$_SERVER["SCRIPT_NAME"];
+		self::$baseUrl = 'http://'.$_SERVER['HTTP_HOST'].substr($_SERVER['SCRIPT_NAME'],0, strrpos($_SERVER['SCRIPT_NAME'], '/') );
 	
 		self::$config = array_merge(include $config);
 		spl_autoload_register( array($this, 'autoloadDomain') );
@@ -19,9 +22,10 @@ class Mvcpp
 		}
 		else
 			$this->route = array(self::$config['defaultController']);
+		self::$user = new WebUser;
 		$this->run($this->route);
 	}
-	private function run($route)
+	public static function run($route)
 	{
 		if(!isset($route[1]))
 			$route[1] = 'index';
@@ -29,8 +33,24 @@ class Mvcpp
 			$file = $controller.ucfirst($route[0]).'Controller.php';
 			if(file_exists($file)){
 				require($file);
-				$className = $route[0].'Controller';
-				call_user_func_array(array(new $className , $route[1]), array());
+				$class_id = $route[0];
+				$class = $class_id.'Controller';
+				$control = new $class($class_id);
+				$allowed = true;
+				if(isset($control->access[$route[1]])){
+					$access = $control->access[$route[1]];
+					if(isset($access['user']))
+						foreach($access['user'] as $key=>$val)
+							$allowed = $allowed && $val == ( isset(self::$user->$key)?self::$user->$key:false);
+					if(isset($access['returnUrl']) && !$allowed){
+						header('Location: '. self::$baseUrl.'?r='.$access['returnUrl']);
+						die();
+					}
+				}
+				if($allowed)
+					call_user_func_array(array($control , $route[1]), array());
+				else
+					throw new Exception('You are not permitted');
 				return;
 			}
 		}
@@ -61,22 +81,3 @@ class Mvcpp
         throw new Exception($class. ' not found here.');
     }
 }
-class SPLAutoLoader{
-
-    public static function autoloadDomain($className, $path) {
-	    $path = array('protected/classes/');
-	    foreach ($path as $folder) {
-		if(file_exists($folder.$className.'.php')){
-		    require_once($folder.$className.'.php');
-		    return true;
-		}       
-	    }
-        self::throwFileNotFoundException($className);
-    }
-
-    public static function throwFileNotFoundException($class)
-    {
-        throw new Exception($class. ' not found here.');
-    }
-
-} //end class

@@ -1,12 +1,12 @@
 <?php
 return	array(
-	'code'=>'sfdsfdf',
+	'name'=>'MVC Plus Plus',
 	'defaultController' => 'site',
-	'name'=>'Report Bubble',
 	'controllerMap'=>array('protected/controllers/'),
 	'import'=>array(
 		'protected/models/',
 		'protected/classes/',
+		'protected/core/classes/'
 	),
 );
 ?>

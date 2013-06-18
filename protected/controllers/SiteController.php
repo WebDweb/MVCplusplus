@@ -4,15 +4,27 @@
  **/
 class SiteController extends BaseController
 {
-	//cthing to say about the below mentioned function, gotto move on and create a new one
-	function __construct()
+	public $layout = 'column1';
+	public $access = array(
+		'index' => array(
+			'user' => array('isGuest' => true, 'username'=>'admin'),
+			'returnUrl'=>'page/index'
+		),
+		'login' => array('user' => array('isGuest' => true), 'returnRoute'=>array('site','index')),
+	);
+
+	public function __construct($id)
 	{
-		//pass on nothing is here
+		parent::__construct($id);
 	}
 
 	public function index()
 	{
-		echo "Welcome to your own mvc .. Right noe this place looks messed up. I think you got to do a lot more work to tidy this up. I would suggest start with the layout views. Look around here. There are no headers. You dont't expect me to put a header for you in here.";
+		$this->render('index');
+	}
+	public function login()
+	{
+		$this->render('login');
 	}
 }
 ?>
